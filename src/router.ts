@@ -8,6 +8,11 @@ const routes: RouteRecordRaw[] = [
         name: 'templates-email',
         component: defineAsyncComponent(() => import('./tools/templates-email/TemplatesEmail.vue')),
     },
+    {
+        path: '/settings',
+        name: 'settings',
+        component: defineAsyncComponent(() => import('./settings/Settings.vue')),
+    },
     { path: '/overview', name: 'overview', component: Overview },
     { path: '', redirect: { name: 'overview' } },
 ];

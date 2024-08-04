@@ -7,7 +7,7 @@ defineProps<{
     isBeta?: boolean;
     title: string;
     icon: FAIcon;
-    menu?: { name: string; to: RouteLocationRaw }[];
+    menu?: { name: string; to: RouteLocationRaw; badge?: number }[];
     actions?: InstanceType<typeof Button>['$props'][][];
     onToggle?: () => void;
 }>();
@@ -49,6 +49,12 @@ defineEmits<{
                     :to="item.to"
                 >
                     {{ item.name }}
+                    <div
+                        v-if="item.badge"
+                        class="-mt-4 h-4 w-4 rounded-full bg-red-500 text-center text-body-xs-emphasized text-white"
+                    >
+                        {{ item.badge }}
+                    </div>
                 </router-link>
             </template>
         </div>

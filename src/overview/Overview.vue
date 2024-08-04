@@ -14,7 +14,7 @@ const sections = computed(() => {
 </script>
 
 <template>
-    <ContentWrapper max-width icon="fas fa-grid-2" :title="txx('Kleiner Helferlein')">
+    <ContentWrapper max-width icon="fas fa-grid-2" :title="txx('Kleine Helferlein')">
         <div v-for="section in sections" :key="section.key" class="flex flex-col gap-4">
             <SectionHeader :label="section.title" />
             <div class="grid gap-2 md:grid-cols-2">

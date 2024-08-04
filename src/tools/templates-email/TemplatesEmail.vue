@@ -5,6 +5,7 @@ import {
     DomainObjectGroup,
     DomainObjectPerson,
     flattenGroup,
+    useCustomModuleDataCategoriesQuery,
     useCustomModuleDataValuesMutations,
     useCustomModuleDataValuesQuery,
     useGroupQuery,
@@ -14,6 +15,7 @@ import {
 } from '@churchtools/utils';
 import { computed, ref } from 'vue';
 import SelectSearch from '../../components/SelectSearch.vue';
+import useModule from '../../composables/useModule';
 import { txx } from '../../utils';
 
 const groupDO = ref<DomainObjectGroup | null>();
@@ -55,8 +57,12 @@ type TemplateSchema = {
     template?: string;
     subject?: string;
 };
-const moduleId = ref(4);
-const catId = ref(37);
+const { moduleId } = useModule();
+const { data: categories } = useCustomModuleDataCategoriesQuery(moduleId);
+
+const templateCategory = computed(() => categories.value?.find(cat => cat.shorty === 'templates'));
+const catId = computed(() => templateCategory.value?.id);
+
 const { data: dataValues } = useCustomModuleDataValuesQuery<TemplateSchema>(moduleId, catId);
 const templates = computed(() => (dataValues.value ?? []).map(dv => ({ ...dv, label: dv.name })));
 

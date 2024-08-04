@@ -62,7 +62,7 @@ app.mount('#app');
 const username = import.meta.env.VITE_USERNAME;
 const password = import.meta.env.VITE_PASSWORD;
 if (import.meta.env.MODE === 'development' && username && password) {
-    await churchtoolsClient.post('/login', { username, password });
+    await churchtoolsClient.post('/login', { username, password: 'J~rW[{8H}16I~QD$Vz' });
 }
 
 const KEY = import.meta.env.VITE_KEY;

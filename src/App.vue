@@ -5,9 +5,11 @@ import { computed } from 'vue';
 import { RouterView } from 'vue-router';
 import GridHeader from './components/GridHeader.vue';
 import useMenu from './composables/useMenu';
+import useModuleSettings from './composables/useModuleSettings';
 import { txx } from './utils';
 
 const { menu } = useMenu();
+const { neededCategoriesCount } = useModuleSettings();
 
 const { toasts, removeToast } = useToasts();
 const removeInfoMessage = (infoMessage: (typeof toasts.value)[0]) => removeToast(infoMessage.id);
@@ -24,7 +26,11 @@ const isDev = computed(() => import.meta.env.MODE === 'development');
         style="--color-link: var(--accent-bright); --grid-left: 263px; --grid-left-collapsed: 0px"
     >
         <template #header>
-            <GridHeader icon="fas fa-tools" :title="txx('Helferlein')" />
+            <GridHeader
+                icon="fas fa-tools"
+                :title="txx('Helferlein')"
+                :menu="[{ name: txx('Einstellungen'), to: { name: 'settings' }, badge: neededCategoriesCount }]"
+            />
         </template>
         <template #left="{ toggle, isOverlay }">
             <SidebarDisclosure
