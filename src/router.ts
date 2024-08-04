@@ -1,9 +1,15 @@
+import { defineAsyncComponent } from 'vue';
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
-import Start from './components/Start.vue';
+import Overview from './overview/Overview.vue';
 
 const routes: RouteRecordRaw[] = [
-    { path: '/start', name: 'start', component: Start },
-    { path: '', redirect: { name: 'start' } },
+    {
+        path: '/templates-email',
+        name: 'templates-email',
+        component: defineAsyncComponent(() => import('./tools/templates-email/TemplatesEmail.vue')),
+    },
+    { path: '/overview', name: 'overview', component: Overview },
+    { path: '', redirect: { name: 'overview' } },
 ];
 
 export const router = createRouter({
