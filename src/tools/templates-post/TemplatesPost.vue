@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import {
+    ActionItem,
     Button,
     Card,
     ContentWrapper,
@@ -7,12 +8,16 @@ import {
     DropdownItem,
     DropdownMenu,
     Input,
+    LinkItem,
+    searchForm,
+    SectionedCard,
     SelectDropdown,
     Textarea,
     useFileUpload,
 } from '@churchtools/styleguide';
 import {
     CTFile,
+    DomainObjectAny,
     PostCreate,
     t,
     transformGroupToDomainObject,
@@ -23,11 +28,11 @@ import {
     usePostHelpers,
     usePosts,
 } from '@churchtools/utils';
-import { computed, ref, watch } from 'vue';
-import SelectSearch from '../../components/SelectSearch.vue';
+import { computed, ref } from 'vue';
 import useContentWithPlaceholder from '../../composables/useContentWithPlaceholder';
 import useModule from '../../composables/useModule';
 import { usePlaceholderPerson } from '../../composables/usePlaceholderPerson';
+import { usePostGroups } from '../../composables/usePostGroups';
 import useTemplates from '../../composables/useTemplates';
 import { txx } from '../../utils';
 
@@ -52,13 +57,15 @@ const onSelectTemplate = (template: TemplateSchema) => {
     title.value = template?.title;
 };
 
-const { personDO, personError, person, personPlaceholder } = usePlaceholderPerson(
+const datasets = ref<DomainObjectAny[]>([]);
+const { personError, persons, personPlaceholder } = usePlaceholderPerson(
+    computed(() => datasets.value.filter(ds => ds.domainType === 'person')),
     computed(() => !!placeholder.value.person?.length),
 );
 
 const { mdToHtml } = useMarkdown();
 
-const placeholderData = computed(() => ({ person: person.value }));
+const placeholderData = computed(() => ({ person: persons.value }));
 
 const {
     selectedTemplate,
@@ -106,14 +113,6 @@ const uploadImage = (imageUrl: string, id: string) => {
             }
         });
 };
-watch(
-    () => personDO.value?.domainIdentifier,
-    () => {
-        if (personDO.value?.domainIdentifier && personDO.value?.imageUrl) {
-            uploadImage(personDO.value?.imageUrl + `?crop=original`, `image-${personDO.value.domainIdentifier}`);
-        }
-    },
-);
 
 const createData = ref<Partial<PostCreate>>({ groupId: 136, visibility: 'group_intern' });
 
@@ -154,21 +153,77 @@ const visibilityHint = computed(() => {
         },
     });
 });
+
+const datasetItems = computed(() => {
+    const items: (ActionItem | LinkItem)[] = [];
+    const counts = {};
+    datasets.value.forEach(dataset => {
+        counts[dataset.domainType] = (counts[dataset.domainType] ?? -1) + 1;
+        items.push({
+            type: 'link',
+            value: dataset.title,
+            description: `${dataset.domainType}.${counts[dataset.domainType]}`,
+            primaryObject: { domainObject: dataset },
+            actions: [
+                {
+                    icon: 'fas fa-xmark',
+                    label: txx('Löschen'),
+                    type: 'button',
+                    onClick: () => {
+                        datasets.value = datasets.value.filter(
+                            ds =>
+                                !(
+                                    ds.domainIdentifier === dataset.domainIdentifier &&
+                                    ds.domainType === dataset.domainType
+                                ),
+                        );
+                    },
+                },
+            ],
+        });
+    });
+    items.push({
+        type: 'action',
+        icon: 'fas fa-plus',
+        label: txx('Weiterer Datensatz'),
+        onClick: async () => {
+            const result = await searchForm({
+                domainTypes: ['person', 'group'],
+                context: txx('Platzhalter-Datensatz'),
+                title: txx('Datensatz suchen'),
+                recentSearchFormat: 'numeric',
+                recentSearchKey: 'recent-searches',
+            });
+            if (result) {
+                datasets.value.push(result);
+                uploadImage(
+                    result.imageUrl + `?crop=original`,
+                    `image-${result.domainType}-${result.domainIdentifier}`,
+                );
+            }
+        },
+    });
+    return items;
+});
+
+const { data: postGroups } = usePostGroups();
+const possibleGroups = computed(() =>
+    (postGroups.value ?? [])
+        .filter(pg => pg.type === 'postPossible')
+        .map(pg => ({ ...pg.group, id: parseInt(pg.group.domainIdentifier), label: pg.group.title })),
+);
 </script>
 <template>
     <ContentWrapper color="accent" icon="fas fa-newspaper" :title="txx('Beiträge mit Vorlagen')" max-width>
-        <div class="grid grid-cols-2 gap-4">
-            <SelectSearch v-model="personDO" :error="personError" :label="txx('Person')" />
-            <SelectDropdown
-                v-if="templates.length"
-                v-model="selectedTemplate"
-                :label="txx('Vorlage')"
-                :options="templates"
-                @update:model-value="onSelectTemplate"
-            />
-        </div>
         <div class="grid grid-cols-2 items-start gap-4">
             <div class="flex flex-col gap-3">
+                <SelectDropdown
+                    v-if="templates.length"
+                    v-model="selectedTemplate"
+                    :label="txx('Vorlage')"
+                    :options="templates"
+                    @update:model-value="onSelectTemplate"
+                />
                 <Input
                     v-model="templateName"
                     :label="txx('Template-Name')"
@@ -231,7 +286,21 @@ const visibilityHint = computed(() => {
                     </Button>
                 </div>
             </div>
-            <div class="flex flex-col gap-2">
+            <div class="flex flex-col gap-3">
+                <div>
+                    <div class="pb-1 text-body-m-emphasized">{{ txx('Platzhalter-Datensätze') }}</div>
+                    <SectionedCard :items="datasetItems"></SectionedCard>
+                </div>
+                <SelectDropdown
+                    v-model="createData.groupId"
+                    :clear="false"
+                    :domain-types="['group']"
+                    emit-id
+                    horizontal
+                    :label="t('newsfeed.create-post.group')"
+                    :options="possibleGroups"
+                    :placeholder="t('select.x', t('group'))"
+                />
                 <SelectDropdown
                     v-model="createData.visibility"
                     :clear="false"
@@ -251,6 +320,7 @@ const visibilityHint = computed(() => {
                 </SelectDropdown>
                 <Card class="-mt-px">
                     <DataOption
+                        v-if="postGroup"
                         size="L"
                         :domain-object="transformGroupToDomainObject(postGroup)"
                         :title="postGroup.name"

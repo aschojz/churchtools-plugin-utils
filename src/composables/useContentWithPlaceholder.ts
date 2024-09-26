@@ -3,7 +3,7 @@ import { Ref, ref, watch } from 'vue';
 
 export default function useContentWithPlaceholder(
     content: Ref<string | undefined>,
-    data: Ref<{ person?: Person; group?: Group }>,
+    data: Ref<{ person?: Person[]; group?: Group[] }>,
     options = { highlightId: true },
 ) {
     const placeholder = ref<{ person?: string[]; group?: string[] }>({});
@@ -19,20 +19,20 @@ export default function useContentWithPlaceholder(
         placeholder.value['group'] = [];
 
         matches?.forEach(match => {
-            const [prefix, key] = match.replace('{{', '').replace('}}', '').split('.');
+            const [prefix, index, key] = match.replace('{{', '').replace('}}', '').split('.');
             if (prefix === 'person') {
-                const value = data.value.person?.[key] ?? [prefix, key].join('.');
+                const value = data.value.person?.[index]?.[key] ?? [prefix, index, key].join('.');
                 text.value = text.value?.replace(match, value);
                 preview.value = preview.value?.replace(
                     match,
                     key !== 'id' || options.highlightId
-                        ? `<span class="placeholder ${data.value.person?.[key] ? '' : 'missing'}">${value}</span>`
+                        ? `<span class="placeholder ${data.value.person?.[index]?.[key] ? '' : 'missing'}">${value}</span>`
                         : value,
                 );
                 placeholder.value.person?.push(key);
             } else if (prefix === 'group') {
-                const flatGroup = flattenGroup(data.value.group);
-                const value = flatGroup?.[key] ?? [prefix, key].join('.');
+                const flatGroup = flattenGroup(data.value.group[index]);
+                const value = flatGroup?.[key] ?? [prefix, index, key].join('.');
                 text.value = text.value?.replace(match, value);
                 preview.value = preview.value?.replace(
                     match,
