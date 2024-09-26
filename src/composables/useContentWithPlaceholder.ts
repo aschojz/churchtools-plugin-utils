@@ -1,12 +1,12 @@
 import { flattenGroup, Group, Person } from '@churchtools/utils';
-import { Ref, ref, watch } from 'vue';
+import { computed, Ref, ref, watch } from 'vue';
 
 export default function useContentWithPlaceholder(
     content: Ref<string | undefined>,
     data: Ref<{ person?: Person[]; group?: Group[] }>,
     options = { highlightId: true },
 ) {
-    const placeholder = ref<{ person?: string[]; group?: string[] }>({});
+    const datasetCount = ref<{ person: Set<string>; group: Set<string> }>({ person: new Set(), group: new Set() });
     const preview = ref<string | undefined>();
     const text = ref<string | undefined>();
 
@@ -15,8 +15,6 @@ export default function useContentWithPlaceholder(
         const matches = content.value?.match(placeholderRegex);
         text.value = content.value;
         preview.value = content.value;
-        placeholder.value['person'] = [];
-        placeholder.value['group'] = [];
 
         matches?.forEach(match => {
             const [prefix, index, key] = match.replace('{{', '').replace('}}', '').split('.');
@@ -29,9 +27,9 @@ export default function useContentWithPlaceholder(
                         ? `<span class="placeholder ${data.value.person?.[index]?.[key] ? '' : 'missing'}">${value}</span>`
                         : value,
                 );
-                placeholder.value.person?.push(key);
+                datasetCount.value.person.add(index);
             } else if (prefix === 'group') {
-                const flatGroup = flattenGroup(data.value.group[index]);
+                const flatGroup = flattenGroup(data.value.group?.[index]);
                 const value = flatGroup?.[key] ?? [prefix, index, key].join('.');
                 text.value = text.value?.replace(match, value);
                 preview.value = preview.value?.replace(
@@ -40,11 +38,14 @@ export default function useContentWithPlaceholder(
                         ? `<span class="placeholder ${flatGroup?.[key] ? '' : 'missing'}">${value}</span>`
                         : value,
                 );
-                placeholder.value.group?.push(key);
+                datasetCount.value.group.add(index);
             }
         });
     };
-    watch([content, () => data.value.person], () => {
+    watch(content, () => {
+        datasetCount.value = { person: new Set(), group: new Set() };
+    });
+    watch([content, () => data.value.person, () => data.value.group], () => {
         computePlaceholder();
     });
 
@@ -52,6 +53,9 @@ export default function useContentWithPlaceholder(
         content,
         text,
         preview,
-        placeholder,
+        datasetCount: computed(() => ({
+            person: datasetCount.value.person.size,
+            group: datasetCount.value.group.size,
+        })),
     };
 }

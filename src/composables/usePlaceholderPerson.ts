@@ -2,7 +2,7 @@ import { DomainObjectPerson, useDate, usePersonsQueryAllPages } from '@churchtoo
 import { computed, Ref } from 'vue';
 import { txx } from '../utils';
 
-export function usePlaceholderPerson(personsDO: Ref<DomainObjectPerson[]>, hasPlaceholder: Ref<boolean>) {
+export function usePlaceholderPerson(personsDO: Ref<DomainObjectPerson[]>, personCount: Ref<number>) {
     const { distanceToNowStrict } = useDate();
 
     const personQuery = computed(() => ({
@@ -27,8 +27,9 @@ export function usePlaceholderPerson(personsDO: Ref<DomainObjectPerson[]>, hasPl
         });
     });
     const personError = computed(() => {
-        if (hasPlaceholder.value && !personsDO.value.length) {
-            return { message: txx('Person ist nicht ausgewählt'), date: new Date() };
+        const missingPerson = personCount.value - personsDO.value.length;
+        if (missingPerson > 0) {
+            return { message: txx(`Es fehlen noch Personen: ${missingPerson}`), date: new Date() };
         }
         return undefined;
     });

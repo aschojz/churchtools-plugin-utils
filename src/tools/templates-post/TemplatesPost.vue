@@ -12,6 +12,7 @@ import {
     searchForm,
     SectionedCard,
     SelectDropdown,
+    Tag,
     Textarea,
     useFileUpload,
 } from '@churchtools/styleguide';
@@ -27,10 +28,12 @@ import {
     useMarkdown,
     usePostHelpers,
     usePosts,
+    useToasts,
 } from '@churchtools/utils';
 import { computed, ref } from 'vue';
 import useContentWithPlaceholder from '../../composables/useContentWithPlaceholder';
 import useModule from '../../composables/useModule';
+import { usePlaceholderGroup } from '../../composables/usePlaceholderGroup';
 import { usePlaceholderPerson } from '../../composables/usePlaceholderPerson';
 import { usePostGroups } from '../../composables/usePostGroups';
 import useTemplates from '../../composables/useTemplates';
@@ -60,12 +63,16 @@ const onSelectTemplate = (template: TemplateSchema) => {
 const datasets = ref<DomainObjectAny[]>([]);
 const { personError, persons, personPlaceholder } = usePlaceholderPerson(
     computed(() => datasets.value.filter(ds => ds.domainType === 'person')),
-    computed(() => !!placeholder.value.person?.length),
+    computed(() => datasetCount.value.person),
+);
+const { groupError, groupPlaceholder, groups } = usePlaceholderGroup(
+    computed(() => datasets.value.filter(ds => ds.domainType === 'group')),
+    computed(() => datasetCount.value.group),
 );
 
 const { mdToHtml } = useMarkdown();
 
-const placeholderData = computed(() => ({ person: persons.value }));
+const placeholderData = computed(() => ({ person: persons.value, group: groups.value }));
 
 const {
     selectedTemplate,
@@ -79,18 +86,29 @@ const {
     setDirty,
 } = useTemplates(catId);
 const { text: titleText, preview: titlePreview } = useContentWithPlaceholder(title, placeholderData);
-const { text: contentText, preview: contentPreview, placeholder } = useContentWithPlaceholder(content, placeholderData);
+const {
+    text: contentText,
+    preview: contentPreview,
+    datasetCount,
+} = useContentWithPlaceholder(content, placeholderData);
 
+const { successToast } = useToasts();
 const { createPost } = usePosts();
 const { mutate: createP } = createPost();
 const onCreatePost = () => {
-    createP({
-        groupId: 136,
-        content: contentText.value,
-        title: titleText.value,
-        visibility: 'group_intern',
-        imageIds: images.value.filter(i => i.checked).map(i => i.id),
-    });
+    createP(
+        {
+            ...createData.value,
+            content: contentText.value,
+            title: titleText.value,
+            imageIds: images.value.filter(i => i.checked).map(i => i.id),
+        },
+        {
+            onSuccess: () => {
+                successToast(txx('Beitrag wurde erstellt'));
+            },
+        },
+    );
 };
 
 const onAddPlaceholder = (text: 'content' | 'title', placeholder: DropdownItem) => {
@@ -101,20 +119,20 @@ const onAddPlaceholder = (text: 'content' | 'title', placeholder: DropdownItem) 
     }
 };
 
-const images = ref<(CTFile & { checked: boolean })[]>([]);
+const images = ref<(CTFile & { checked: boolean; name: string })[]>([]);
 const { uploadFile } = useFileUpload('/files/unknown/post-upload');
-const uploadImage = (imageUrl: string, id: string) => {
+const uploadImage = (imageUrl: string, id: string, name: string) => {
     fetch(imageUrl)
         .then(res => res.blob()) // Gets the response and returns it as a blob
         .then(async blob => {
             const file = await uploadFile({ file: blob, id });
             if (file) {
-                images.value.push({ ...file, checked: true });
+                images.value.push({ ...file, checked: true, name });
             }
         });
 };
 
-const createData = ref<Partial<PostCreate>>({ groupId: 136, visibility: 'group_intern' });
+const createData = ref<Partial<PostCreate>>({ visibility: 'group_intern' });
 
 const { getVisibilityHint } = usePostHelpers();
 const postGroupId = computed(() => createData.value.groupId);
@@ -199,6 +217,7 @@ const datasetItems = computed(() => {
                 uploadImage(
                     result.imageUrl + `?crop=original`,
                     `image-${result.domainType}-${result.domainIdentifier}`,
+                    result.title,
                 );
             }
         },
@@ -244,7 +263,10 @@ const possibleGroups = computed(() =>
                 >
                     <template #label-end>
                         <DropdownMenu
-                            :menu-items="[{ items: personPlaceholder }]"
+                            :menu-items="[
+                                { title: txx('Personen'), items: personPlaceholder },
+                                { title: txx('Gruppen'), items: groupPlaceholder },
+                            ]"
                             @click="onAddPlaceholder('content', $event)"
                         >
                             <Button size="S" icon="fas fa-plus" text />
@@ -287,9 +309,25 @@ const possibleGroups = computed(() =>
                 </div>
             </div>
             <div class="flex flex-col gap-3">
-                <div>
-                    <div class="pb-1 text-body-m-emphasized">{{ txx('Platzhalter-Datensätze') }}</div>
+                <div class="flex flex-col gap-1">
+                    <div class="text-body-m-emphasized">{{ txx('Platzhalter-Datensätze') }}</div>
                     <SectionedCard :items="datasetItems"></SectionedCard>
+                    <div class="flex flex-wrap gap-x-3 gap-y-1">
+                        <Tag
+                            v-if="personError"
+                            icon="fas fa-exclamation-triangle"
+                            :label="personError?.message"
+                            color="red"
+                            size="S"
+                        />
+                        <Tag
+                            v-if="groupError"
+                            icon="fas fa-exclamation-triangle"
+                            :label="groupError?.message"
+                            color="red"
+                            size="S"
+                        />
+                    </div>
                 </div>
                 <SelectDropdown
                     v-model="createData.groupId"
@@ -332,23 +370,33 @@ const possibleGroups = computed(() =>
                             contentPreview ? mdToHtml(contentPreview, { simplifiedAutoLink: false }) : txx('Inhalt')
                         "
                     ></div>
-                    <div class="mt-4 divide-y divide-solid">
-                        <div v-for="image in images" :key="image.id">
-                            <DataOption
-                                :domain-object="image"
-                                :title="'#' + image.id"
-                                :icon="
-                                    image.checked
-                                        ? 'fas fa-square-check text-success-bright'
-                                        : 'far fa-square text-basic-secondary'
-                                "
-                                @click="image.checked = !image.checked"
-                            />
+                    <div v-if="images.length" class="mt-4">
+                        <div class="mb-1 text-body-m-emphasized">
+                            {{ txx('Folgende Fotos werden dem Beitrag hinzugefügt:') }}
+                        </div>
+                        <div class="divide-y divide-solid">
+                            <div v-for="image in images" :key="image.id">
+                                <DataOption
+                                    :domain-object="image"
+                                    :title="txx(`Foto von „${image.name}”`)"
+                                    class="-mx-2 cursor-pointer px-2 py-2 hover:bg-basic-b-pale"
+                                    :icon="
+                                        image.checked
+                                            ? 'fas fa-square-check text-accent-bright'
+                                            : 'far fa-square text-basic-secondary'
+                                    "
+                                    @click="image.checked = !image.checked"
+                                />
+                            </div>
                         </div>
                     </div>
                 </Card>
                 <div class="flex justify-end">
-                    <Button icon="fas fa-newspaper" :disabled="personError" @click="onCreatePost">
+                    <Button
+                        icon="fas fa-newspaper"
+                        :disabled="personError || groupError || !createData.groupId || !titleText"
+                        @click="onCreatePost"
+                    >
                         {{ txx('Veröffentlichen') }}
                     </Button>
                 </div>
