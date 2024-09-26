@@ -10,7 +10,7 @@ export default function useMenu() {
                 children: [
                     {
                         key: 'overview-utils',
-                        avatar: { icon: 'fas fa-grid-2' },
+                        avatar: { icon: 'fas fa-grid-2', color: 'accent' },
                         title: txx('Übersicht'),
                         to: { name: 'overview' },
                     },
@@ -22,12 +22,34 @@ export default function useMenu() {
                 children: [
                     {
                         key: 'templates-email',
-                        avatar: { icon: 'fas fa-envelope' },
+                        avatar: { icon: 'fas fa-envelope', color: 'accent' },
                         title: txx('E-Mails'),
                         description: txx(
                             'Vorlagen für E-Mails erstellen mit Platzhaltern für die addressierte Person und eine ausgewählte Gruppe.',
                         ),
                         to: { name: 'templates-email' },
+                    },
+                    {
+                        key: 'templates-post',
+                        avatar: { icon: 'fas fa-newspaper', color: 'accent' },
+                        title: txx('Beiträge'),
+                        description: txx(
+                            'Vorlagen für Beiträge mit Platzhaltern für eine Person oder/und eine ausgewählte Gruppe.',
+                        ),
+                        to: { name: 'templates-post' },
+                    },
+                ],
+            },
+            {
+                key: 'others',
+                title: txx('Sonstiges'),
+                children: [
+                    {
+                        key: 'qr-code',
+                        avatar: { icon: 'fas fa-qrcode', color: 'accent' },
+                        title: txx('QR-Codes generieren'),
+                        description: txx('QR-Code für eine URL generieren und runterladen'),
+                        to: { name: 'qr-code' },
                     },
                 ],
             },

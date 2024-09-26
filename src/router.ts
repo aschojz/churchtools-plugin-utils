@@ -9,6 +9,16 @@ const routes: RouteRecordRaw[] = [
         component: defineAsyncComponent(() => import('./tools/templates-email/TemplatesEmail.vue')),
     },
     {
+        path: '/templates-post',
+        name: 'templates-post',
+        component: defineAsyncComponent(() => import('./tools/templates-post/TemplatesPost.vue')),
+    },
+    {
+        path: '/qr-code',
+        name: 'qr-code',
+        component: defineAsyncComponent(() => import('./tools/qr-code/QRCode.vue')),
+    },
+    {
         path: '/settings',
         name: 'settings',
         component: defineAsyncComponent(() => import('./settings/Settings.vue')),

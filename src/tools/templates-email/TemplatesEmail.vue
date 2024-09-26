@@ -60,7 +60,7 @@ type TemplateSchema = {
 const { moduleId } = useModule();
 const { data: categories } = useCustomModuleDataCategoriesQuery(moduleId);
 
-const templateCategory = computed(() => categories.value?.find(cat => cat.shorty === 'templates'));
+const templateCategory = computed(() => categories.value?.find(cat => cat.shorty === 'templates-email'));
 const catId = computed(() => templateCategory.value?.id);
 
 const { data: dataValues } = useCustomModuleDataValuesQuery<TemplateSchema>(moduleId, catId);
@@ -134,10 +134,10 @@ const onSendEmail = async () => {
 };
 
 const templateIsDirty = ref(false);
-const setDirty = (type: 'name' | 'subuject' | 'template') => {
+const setDirty = (type: 'name' | 'subject' | 'template') => {
     if (type === 'name') {
         templateIsDirty.value = templateName.value !== selectedTemplate.value?.name;
-    } else if (type === 'subuject') {
+    } else if (type === 'subject') {
         templateIsDirty.value = subject.value !== selectedTemplate.value?.subject;
     } else if (type === 'template') {
         templateIsDirty.value = editedTemplate.value !== selectedTemplate.value?.template;
@@ -153,11 +153,12 @@ const onClear = () => {
 </script>
 
 <template>
-    <ContentWrapper icon="fas fa-envelope" :title="txx('E-Mails mit Vorlagen')" max-width>
+    <ContentWrapper color="accent" icon="fas fa-envelope" :title="txx('E-Mails mit Vorlagen')" max-width>
         <div class="grid grid-cols-3 gap-4">
             <SelectSearch v-model="personDO" :error="personError" :label="txx('Person')" />
             <SelectSearch v-model="groupDO" :error="groupError" :label="txx('Gruppe')" :domain-types="['group']" />
             <SelectDropdown
+                v-if="templates.length"
                 v-model="selectedTemplate"
                 :label="txx('Vorlage')"
                 :options="templates"
@@ -176,7 +177,7 @@ const onClear = () => {
                     v-model="subject"
                     :label="txx('E-Mail-Betreff')"
                     class="w-full"
-                    @update:model-value="setDirty('subuject')"
+                    @update:model-value="setDirty('subject')"
                 />
                 <Textarea
                     v-model="editedTemplate"
@@ -223,7 +224,6 @@ const onClear = () => {
                 <Card class="-mt-px">
                     <DataOption
                         size="L"
-                        class="-mx-4 -my-2.5"
                         :domain-object="personDO ?? { initials: 'A', domainType: 'person' }"
                         :title="personDO?.title ?? txx('Addressat')"
                         :note="personDO ? person?.email : txx('E-Mail-Adresse')"

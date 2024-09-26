@@ -11,16 +11,18 @@
     },
     "dependencies": {
         "pinia": "^2.0.36",
+        "qr-code-styling": "^1.6.0-rc.1",
         "vue": "^3.2.47",
         "vue-router": "^4.1.6"
     },
     "devDependencies": {
         "@churchtools/churchtools-client": "^1.3.7",
-        "@churchtools/colors": "^0.1.1",
-        "@churchtools/styleguide": "^0.61.0",
-        "@churchtools/utils": "^0.5.1",
+        "@churchtools/colors": "file:../churchtools/frontend-packages/colors",
+        "@churchtools/styleguide": "file:../churchtools/frontend-packages/styleguide",
+        "@churchtools/utils": "file:../churchtools/frontend-packages/utils",
         "@tanstack/vue-query": "^5.51.9",
         "@types/node": "^20.1.2",
+        "@types/qrcode": "^1.5.5",
         "@vitejs/plugin-vue": "^5.0.4",
         "@vue/eslint-config-prettier": "^9.0.0",
         "@vue/eslint-config-typescript": "^13.0.0",

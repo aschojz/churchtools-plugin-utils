@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { churchtoolsClient } from '@churchtools/churchtools-client';
 import { SelectDropdown, SelectOption, SelectSection, SelectValue } from '@churchtools/styleguide';
-import { FAIcon } from '@churchtools/utils';
+import { ErrorObj, FAIcon } from '@churchtools/utils';
 import { onMounted, ref, watch } from 'vue';
 const props = withDefaults(
     defineProps<{
@@ -33,6 +33,13 @@ const props = withDefaults(
         placeholder: 'person.search.placeholder',
         showLabel: true,
         bold: true,
+        note: undefined,
+        label: undefined,
+        iconBefore: undefined,
+        error: undefined,
+        helpLink: undefined,
+        options: undefined,
+        size: 'M',
     },
 );
 const emit = defineEmits<{
