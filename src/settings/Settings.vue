@@ -16,10 +16,10 @@ const createCategory = async (category: CustomModuleDataCategoryCreate) => {
 };
 </script>
 <template>
-    <ContentWrapper icon="fas fa-cog" :title="txx('Einstellungen')" max-width>
+    <ContentWrapper icon="fas fa-cog" max-width :title="txx('Einstellungen')">
         <Card>
             <template #full>
-                <div class="flex flex-col divide-y">
+                <div class="divide-basic-divider flex flex-col divide-y divide-solid">
                     <div
                         v-for="category in neededCategories"
                         :key="category.shorty"
@@ -28,9 +28,9 @@ const createCategory = async (category: CustomModuleDataCategoryCreate) => {
                         <div>{{ category.name }}</div>
                         <Button
                             v-if="category.neededToCreate"
-                            size="S"
-                            icon="fas fa-plus"
                             color="green"
+                            icon="fas fa-plus"
+                            size="S"
                             @click="createCategory(category)"
                         >
                             {{ txx('Erstellen') }}

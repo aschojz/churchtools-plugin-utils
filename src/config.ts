@@ -4,7 +4,7 @@ import { txx } from './utils';
 export const needed: Omit<CustomModuleDataCategoryCreate, 'customModuleId'>[] = [
     {
         shorty: 'templates-email',
-        name: txx('Vorlagen'),
+        name: txx('Vorlagen für E-Mails'),
         description: txx('Template mit Placeholdern'),
     },
     {

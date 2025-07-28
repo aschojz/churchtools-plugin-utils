@@ -1,4 +1,4 @@
-import { DomainObjectGroup, useGroupsQueryAllPages } from '@churchtools/utils';
+import { DomainObjectGroup, t, useDbFieldsQuery, useGroupsQueryAllPages } from '@churchtools/utils';
 import { computed, Ref } from 'vue';
 import { txx } from '../utils';
 
@@ -27,10 +27,15 @@ export function usePlaceholderGroup(groupDO: Ref<DomainObjectGroup[]>, groupCoun
         return undefined;
     });
 
+    const { groupFields, customGroupFields } = useDbFieldsQuery();
+
     const groupPlaceholder = computed(() => {
         return [
             { id: 'group.0.id', label: txx('ID') },
-            { id: 'group.0.name', label: txx('Name') },
+            ...[...groupFields.value, ...customGroupFields.value].map(field => ({
+                id: `group.0.${field.key}`,
+                label: t(field.name, false),
+            })),
         ];
     });
     return { groups, groupError, groupPlaceholder };

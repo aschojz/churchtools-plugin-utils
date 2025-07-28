@@ -19,6 +19,11 @@ const routes: RouteRecordRaw[] = [
         component: defineAsyncComponent(() => import('./tools/qr-code/QRCode.vue')),
     },
     {
+        path: '/small-groups',
+        name: 'small-groups',
+        component: defineAsyncComponent(() => import('./tools/small-groups/SmallGroups.vue')),
+    },
+    {
         path: '/settings',
         name: 'settings',
         component: defineAsyncComponent(() => import('./settings/Settings.vue')),

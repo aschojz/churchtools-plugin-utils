@@ -30,7 +30,7 @@ export default function useContentWithPlaceholder(
                 datasetCount.value.person.add(index);
             } else if (prefix === 'group') {
                 const flatGroup = flattenGroup(data.value.group?.[index]);
-                const value = flatGroup?.[key] ?? [prefix, index, key].join('.');
+                const value = flatGroup?.[key as keyof typeof flatGroup] ?? [prefix, index, key].join('.');
                 text.value = text.value?.replace(match, value);
                 preview.value = preview.value?.replace(
                     match,

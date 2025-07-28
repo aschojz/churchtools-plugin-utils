@@ -27,7 +27,7 @@ import {
     useGroupQuery,
     useMarkdown,
     usePostHelpers,
-    usePosts,
+    usePostMutations,
     useToasts,
 } from '@churchtools/utils';
 import { computed, ref } from 'vue';
@@ -48,11 +48,7 @@ const catId = computed(() => templateCategory.value?.id);
 const { data: dataValues } = useCustomModuleDataValuesQuery<TemplateSchema>(moduleId, catId);
 const templates = computed(() => (dataValues.value ?? []).map(dv => ({ ...dv, label: dv.name })));
 
-type TemplateSchema = {
-    name?: string;
-    template?: string;
-    title?: string;
-};
+type TemplateSchema = { name?: string; template?: string; title?: string };
 
 const onSelectTemplate = (template: TemplateSchema) => {
     templateName.value = template?.name;
@@ -93,19 +89,19 @@ const {
 } = useContentWithPlaceholder(content, placeholderData);
 
 const { successToast } = useToasts();
-const { createPost } = usePosts();
-const { mutate: createP } = createPost();
+const { createPost } = usePostMutations();
 const onCreatePost = () => {
-    createP(
+    createPost(
         {
             ...createData.value,
-            content: contentText.value,
+            content: contentText.value ?? null,
             title: titleText.value,
             imageIds: images.value.filter(i => i.checked).map(i => i.id),
         },
         {
             onSuccess: () => {
                 successToast(txx('Beitrag wurde erstellt'));
+                datasets.value = [];
             },
         },
     );
@@ -143,20 +139,18 @@ const visibilityOptions = computed(() => {
     }
     const partialPost = {
         groupVisibility: postGroup.value.settings.visibility,
-        group: {
-            title: postGroup.value.name,
-        },
+        group: { title: postGroup.value.name },
     };
     const visibilityOptions = [];
     visibilityOptions.push({
         dataCy: 'group-intern-visibility',
-        label: t('post.visibility.group-intern'),
+        label: txx('Nur Gruppenmitglieder'),
         id: 'group_intern' as const,
         description: getVisibilityHint({ ...partialPost, visibility: 'group_intern' }).hintLong,
     });
     visibilityOptions.push({
         dataCy: 'group-visible-visibility',
-        label: t('post.visibility.group-visible'),
+        label: txx('Wie Gruppe'),
         id: 'group_visible' as const,
         description: getVisibilityHint({ ...partialPost, visibility: 'group_visible' }).hintLong,
     });
@@ -166,9 +160,7 @@ const visibilityHint = computed(() => {
     return getVisibilityHint({
         visibility: createData.value.visibility,
         groupVisibility: postGroup.value?.settings.visibility ?? 'hidden',
-        group: {
-            title: postGroup.value?.name ?? '',
-        },
+        group: { title: postGroup.value?.name ?? '' },
     });
 });
 
@@ -183,6 +175,14 @@ const datasetItems = computed(() => {
             description: `${dataset.domainType}.${counts[dataset.domainType]}`,
             primaryObject: { domainObject: dataset },
             actions: [
+                {
+                    icon: 'fas fa-external-link-alt',
+                    label: txx('Profil öffnen'),
+                    type: 'button',
+                    onClick: () => {
+                        window.open(dataset.frontendUrl, '_blank');
+                    },
+                },
                 {
                     icon: 'fas fa-xmark',
                     label: txx('Löschen'),
@@ -229,11 +229,16 @@ const { data: postGroups } = usePostGroups();
 const possibleGroups = computed(() =>
     (postGroups.value ?? [])
         .filter(pg => pg.type === 'postPossible')
-        .map(pg => ({ ...pg.group, id: parseInt(pg.group.domainIdentifier), label: pg.group.title })),
+        .map(pg => ({
+            ...pg.group,
+            id: parseInt(pg.group.domainIdentifier),
+            label: pg.group.title,
+            icon: 'fas fa-users' as const,
+        })),
 );
 </script>
 <template>
-    <ContentWrapper color="accent" icon="fas fa-newspaper" :title="txx('Beiträge mit Vorlagen')" max-width>
+    <ContentWrapper color="accent" icon="fas fa-newspaper" max-width :title="txx('Beiträge mit Vorlagen')">
         <div class="grid grid-cols-2 items-start gap-4">
             <div class="flex flex-col gap-3">
                 <SelectDropdown
@@ -245,20 +250,20 @@ const possibleGroups = computed(() =>
                 />
                 <Input
                     v-model="templateName"
-                    :label="txx('Template-Name')"
                     class="w-full"
+                    :label="txx('Template-Name')"
                     @update:model-value="setDirty('name')"
                 />
                 <Input
                     v-model="title"
-                    :label="txx('Beitragstitel')"
                     class="w-full"
+                    :label="txx('Beitragstitel')"
                     @update:model-value="setDirty('title')"
                 />
                 <Textarea
                     v-model="content"
-                    :label="txx('Inhalt')"
                     class="w-full"
+                    :label="txx('Inhalt')"
                     @update:model-value="setDirty('template')"
                 >
                     <template #label-end>
@@ -269,7 +274,7 @@ const possibleGroups = computed(() =>
                             ]"
                             @click="onAddPlaceholder('content', $event)"
                         >
-                            <Button size="S" icon="fas fa-plus" text />
+                            <Button icon="fas fa-plus" size="S" text />
                         </DropdownMenu>
                     </template>
                 </Textarea>
@@ -277,31 +282,31 @@ const possibleGroups = computed(() =>
                     <Button
                         v-if="selectedTemplate"
                         :disabled="!templateIsDirty"
-                        size="S"
                         icon="fas fa-save"
+                        size="S"
                         @click="onUpdateTemplate"
                     >
                         {{ txx('Vorlage aktualisieren') }}
                     </Button>
-                    <Button v-else-if="content" size="S" icon="fas fa-save" @click="onCreateTemplate">
+                    <Button v-else-if="content" icon="fas fa-save" size="S" @click="onCreateTemplate">
                         {{ txx('Vorlage anlegen') }}
                     </Button>
                     <Button
                         v-if="selectedTemplate && templateIsDirty"
-                        size="S"
-                        outlined
                         color="basic"
                         icon="fas fa-undo"
+                        outlined
+                        size="S"
                         @click="onSelectTemplate(selectedTemplate)"
                     >
                         {{ txx('Verwerfen') }}
                     </Button>
                     <Button
                         v-else-if="templateIsDirty && !!content"
-                        size="S"
-                        outlined
                         color="basic"
                         icon="fas fa-xmark-circle"
+                        outlined
+                        size="S"
                         @click="onClear"
                     >
                         {{ txx('Verwerfen') }}
@@ -315,16 +320,16 @@ const possibleGroups = computed(() =>
                     <div class="flex flex-wrap gap-x-3 gap-y-1">
                         <Tag
                             v-if="personError"
+                            color="red"
                             icon="fas fa-exclamation-triangle"
                             :label="personError?.message"
-                            color="red"
                             size="S"
                         />
                         <Tag
                             v-if="groupError"
+                            color="red"
                             icon="fas fa-exclamation-triangle"
                             :label="groupError?.message"
-                            color="red"
                             size="S"
                         />
                     </div>
@@ -335,35 +340,38 @@ const possibleGroups = computed(() =>
                     :domain-types="['group']"
                     emit-id
                     horizontal
-                    :label="t('newsfeed.create-post.group')"
+                    :label="txx('Gruppe für den Beitrag')"
                     :options="possibleGroups"
-                    :placeholder="t('select.x', t('group'))"
+                    :placeholder="txx('Gruppe auswählen')"
                 />
                 <SelectDropdown
                     v-model="createData.visibility"
                     :clear="false"
-                    data-cy="create-post-post-visibility"
+                    :disabled="!createData.groupId"
                     emit-id
                     horizontal
-                    :label="t('newsfeed.create-post.visibility.label')"
+                    :label="txx('Sichtbarkeit des Beitrags')"
                     :options="visibilityOptions"
                 >
                     <template #after>
-                        <div class="mt-1 flex items-center gap-2 text-body-m text-basic-secondary">
+                        <div
+                            class="text-body-m text-basic-secondary mt-1 flex items-center gap-2"
+                            :class="{ 'opacity-0': !createData.groupId }"
+                        >
                             <i :class="visibilityHint.icon"></i>
-                            <span>{{ visibilityHint.hintShort }}</span>
-                            <i v-tippy="visibilityHint.hintLong" class="fas fa-info-circle text-basic-tertiary" />
+                            <span>{{ t(visibilityHint.hintShort) }}</span>
+                            <i v-tippy="t(visibilityHint.hintLong)" class="fas fa-info-circle text-basic-tertiary" />
                         </div>
                     </template>
                 </SelectDropdown>
                 <Card class="-mt-px">
                     <DataOption
                         v-if="postGroup"
-                        size="L"
                         :domain-object="transformGroupToDomainObject(postGroup)"
+                        size="L"
                         :title="postGroup.name"
                     />
-                    <div class="pt-4 text-body-m-emphasized" v-html="titlePreview || txx('Betreff')"></div>
+                    <div class="text-body-m-emphasized pt-4" v-html="titlePreview || txx('Betreff')"></div>
                     <div
                         class="pt-2"
                         v-html="
@@ -371,20 +379,20 @@ const possibleGroups = computed(() =>
                         "
                     ></div>
                     <div v-if="images.length" class="mt-4">
-                        <div class="mb-1 text-body-m-emphasized">
+                        <div class="text-body-m-emphasized mb-1">
                             {{ txx('Folgende Fotos werden dem Beitrag hinzugefügt:') }}
                         </div>
                         <div class="divide-y divide-solid">
                             <div v-for="image in images" :key="image.id">
                                 <DataOption
+                                    class="hover:bg-basic-b-pale -mx-2 cursor-pointer px-2 py-2"
                                     :domain-object="image"
-                                    :title="txx(`Foto von „${image.name}”`)"
-                                    class="-mx-2 cursor-pointer px-2 py-2 hover:bg-basic-b-pale"
                                     :icon="
                                         image.checked
                                             ? 'fas fa-square-check text-accent-bright'
                                             : 'far fa-square text-basic-secondary'
                                     "
+                                    :title="txx(`Foto von „${image.name}”`)"
                                     @click="image.checked = !image.checked"
                                 />
                             </div>
@@ -393,8 +401,10 @@ const possibleGroups = computed(() =>
                 </Card>
                 <div class="flex justify-end">
                     <Button
+                        :disabled="
+                            personError !== undefined || groupError !== undefined || !createData.groupId || !titleText
+                        "
                         icon="fas fa-newspaper"
-                        :disabled="personError || groupError || !createData.groupId || !titleText"
                         @click="onCreatePost"
                     >
                         {{ txx('Veröffentlichen') }}
@@ -407,13 +417,13 @@ const possibleGroups = computed(() =>
 </template>
 <style scoped>
 :deep(.placeholder) {
-    color: var(--accent-bright);
-    background: var(--accent-b-pale);
+    color: var(--color-accent-bright);
+    background: var(--color-accent-b-pale);
     padding: 1px 4px;
     border-radius: 4px;
 }
 :deep(.missing) {
-    background: var(--error-b-pale);
-    color: var(--error-bright);
+    background: var(--color-error-b-pale);
+    color: var(--color-error-bright);
 }
 </style>

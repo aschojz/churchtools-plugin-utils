@@ -153,10 +153,10 @@ const onClear = () => {
 </script>
 
 <template>
-    <ContentWrapper color="accent" icon="fas fa-envelope" :title="txx('E-Mails mit Vorlagen')" max-width>
+    <ContentWrapper color="accent" icon="fas fa-envelope" max-width :title="txx('E-Mails mit Vorlagen')">
         <div class="grid grid-cols-3 gap-4">
             <SelectSearch v-model="personDO" :error="personError" :label="txx('Person')" />
-            <SelectSearch v-model="groupDO" :error="groupError" :label="txx('Gruppe')" :domain-types="['group']" />
+            <SelectSearch v-model="groupDO" :domain-types="['group']" :error="groupError" :label="txx('Gruppe')" />
             <SelectDropdown
                 v-if="templates.length"
                 v-model="selectedTemplate"
@@ -169,51 +169,51 @@ const onClear = () => {
             <div class="flex flex-col gap-3">
                 <Input
                     v-model="templateName"
-                    :label="txx('Template-Name')"
                     class="w-full"
+                    :label="txx('Template-Name')"
                     @update:model-value="setDirty('name')"
                 />
                 <Input
                     v-model="subject"
-                    :label="txx('E-Mail-Betreff')"
                     class="w-full"
+                    :label="txx('E-Mail-Betreff')"
                     @update:model-value="setDirty('subject')"
                 />
                 <Textarea
                     v-model="editedTemplate"
-                    :label="txx('Inhalt')"
                     class="w-full"
+                    :label="txx('Inhalt')"
                     @update:model-value="setDirty('template')"
                 />
                 <div class="flex items-center gap-2">
                     <Button
                         v-if="selectedTemplate"
                         :disabled="!templateIsDirty"
-                        size="S"
                         icon="fas fa-save"
+                        size="S"
                         @click="onUpdateTemplate"
                     >
                         {{ txx('Vorlage aktualisieren') }}
                     </Button>
-                    <Button v-else-if="editedTemplate" size="S" icon="fas fa-save" @click="onCreateTemplate">
+                    <Button v-else-if="editedTemplate" icon="fas fa-save" size="S" @click="onCreateTemplate">
                         {{ txx('Vorlage anlegen') }}
                     </Button>
                     <Button
                         v-if="selectedTemplate && templateIsDirty"
-                        size="S"
-                        outlined
                         color="basic"
                         icon="fas fa-undo"
+                        outlined
+                        size="S"
                         @click="onSelectTemplate(selectedTemplate)"
                     >
                         {{ txx('Verwerfen') }}
                     </Button>
                     <Button
                         v-else-if="templateIsDirty && !!editedTemplate"
-                        size="S"
-                        outlined
                         color="basic"
                         icon="fas fa-xmark-circle"
+                        outlined
+                        size="S"
                         @click="onClear"
                     >
                         {{ txx('Verwerfen') }}
@@ -223,12 +223,12 @@ const onClear = () => {
             <div class="flex flex-col gap-2 pt-6">
                 <Card class="-mt-px">
                     <DataOption
-                        size="L"
                         :domain-object="personDO ?? { initials: 'A', domainType: 'person' }"
-                        :title="personDO?.title ?? txx('Addressat')"
                         :note="personDO ? person?.email : txx('E-Mail-Adresse')"
+                        size="L"
+                        :title="personDO?.title ?? txx('Addressat')"
                     />
-                    <div class="pt-4 text-body-m-emphasized">{{ subject || txx('Betreff') }}</div>
+                    <div class="text-body-m-emphasized pt-4">{{ subject || txx('Betreff') }}</div>
                     <div
                         class="pt-2"
                         v-html="
@@ -237,7 +237,7 @@ const onClear = () => {
                     ></div>
                 </Card>
                 <div class="flex justify-end">
-                    <Button icon="fas fa-envelope" :disabled="groupError || personError" @click="onSendEmail">
+                    <Button :disabled="groupError || personError" icon="fas fa-envelope" @click="onSendEmail">
                         {{ txx('Senden') }}
                     </Button>
                 </div>
@@ -247,13 +247,13 @@ const onClear = () => {
 </template>
 <style scoped>
 :deep(.placeholder) {
-    color: var(--accent-bright);
-    background: var(--accent-b-pale);
+    color: var(--color-accent-bright);
+    background: var(--color-accent-b-pale);
     padding: 1px 4px;
     border-radius: 4px;
 }
 :deep(.missing) {
-    background: var(--error-b-pale);
-    color: var(--error-bright);
+    background: var(--color-error-b-pale);
+    color: var(--color-error-bright);
 }
 </style>

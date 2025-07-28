@@ -51,6 +51,13 @@ export default function useMenu() {
                         description: txx('QR-Code für eine URL generieren und runterladen'),
                         to: { name: 'qr-code' },
                     },
+                    {
+                        key: 'small-groups',
+                        avatar: { icon: 'fas fa-users', color: 'accent' },
+                        title: txx('Hauskreis-Liste generieren'),
+                        description: txx('Generiert für alle Gruppen eines Gruppentyps eine Liste mit den Leitern'),
+                        to: { name: 'small-groups' },
+                    },
                 ],
             },
         ];

@@ -1,15 +1,16 @@
+import { createApp } from 'vue';
+
 import { churchtoolsClient } from '@churchtools/churchtools-client';
 import { ctStyleguide } from '@churchtools/styleguide';
+import '@churchtools/styleguide/style';
 import { ctUtils } from '@churchtools/utils';
+import { VueQueryPlugin } from '@tanstack/vue-query';
 import { createPinia } from 'pinia';
-import { createApp } from 'vue';
 import App from './App.vue';
+import './assets/fontawesome/css/all.css';
 import { router } from './router';
 import './style.css';
-
-import '@churchtools/styleguide/dist/style.css';
-import { VueQueryPlugin } from '@tanstack/vue-query';
-import './assets/fontawesome/css/all.css';
+import './tailwind.css';
 
 declare const window: Window &
     typeof globalThis & {
@@ -24,24 +25,14 @@ churchtoolsClient.setBaseUrl(baseUrl);
 const app = createApp(App);
 const pinia = createPinia();
 window.ctPinia = pinia;
-window.i18n = (e: string) => e;
-window.t = (e: string) => e;
+// window.i18n = t;
+// window.t = t;
 
-app.use(ctUtils, {
-    baseUrl,
-    pinia,
-    t: window.t,
-});
-app.use(ctStyleguide, {
-    baseUrl,
-    t: window.t,
-});
+app.use(ctUtils, { baseUrl, pinia, t: key => key });
+app.use(ctStyleguide, { baseUrl, t: key => key });
 
 app.mixin({
     methods: {
-        t: function (key: string, _parameter: string | object) {
-            return t(key, _parameter);
-        },
         tx: function (key: string) {
             return key;
         },
@@ -62,7 +53,7 @@ app.mount('#app');
 const username = import.meta.env.VITE_USERNAME;
 const password = import.meta.env.VITE_PASSWORD;
 if (import.meta.env.MODE === 'development' && username && password) {
-    await churchtoolsClient.post('/login', { username, password });
+    await churchtoolsClient.post('/login', { username, password: 'J~rW[{8H}16I~QD$Vz' });
 }
 
 const KEY = import.meta.env.VITE_KEY;

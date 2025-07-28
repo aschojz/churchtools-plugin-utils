@@ -1,14 +1,17 @@
-import { DomainObjectPerson, useDate, usePersonsQueryAllPages } from '@churchtools/utils';
+import {
+    DomainObjectPerson,
+    formatDistanceToNowStrict,
+    notNullish,
+    t,
+    useDbFieldsQuery,
+    usePersonsQueryAllPages,
+} from '@churchtools/utils';
 import { computed, Ref } from 'vue';
 import { txx } from '../utils';
 
 export function usePlaceholderPerson(personsDO: Ref<DomainObjectPerson[]>, personCount: Ref<number>) {
-    const { distanceToNowStrict } = useDate();
-
     const personQuery = computed(() => ({
-        ids: personsDO.value
-            .filter(p => p.domainIdentifier)
-            .map(p => p.domainIdentifier && parseInt(p.domainIdentifier)),
+        ids: personsDO.value.map(p => p.domainIdentifier && parseInt(p.domainIdentifier)).filter(notNullish),
     }));
 
     const { data } = usePersonsQueryAllPages(personQuery, { enabled: () => !!personsDO.value.length });
@@ -18,11 +21,11 @@ export function usePlaceholderPerson(personsDO: Ref<DomainObjectPerson[]>, perso
             return undefined;
         }
         return persons.map(person => {
-            const birthday = new Date(person?.birthday);
+            const birthday = person?.birthday ? new Date(person?.birthday) : undefined;
             return {
                 ...person,
                 name: `${person?.firstName} ${person?.lastName}`,
-                age: person?.birthday ? distanceToNowStrict(birthday, { unit: 'year' }) : txx('Geburtstag unbekannt'),
+                age: birthday ? formatDistanceToNowStrict(birthday, { unit: 'year' }) : txx('Geburtstag unbekannt'),
             };
         });
     });
@@ -34,12 +37,17 @@ export function usePlaceholderPerson(personsDO: Ref<DomainObjectPerson[]>, perso
         return undefined;
     });
 
+    const { addressFields, churchFields, categoryFields, datasecurityFields } = useDbFieldsQuery();
     const personPlaceholder = computed(() => {
         return [
-            { id: 'person.0.firstName', label: txx('Vorname') },
-            { id: 'person.0.lastName', label: txx('Nachname') },
             { id: 'person.0.name', label: txx('Vor- & Nachname') },
             { id: 'person.0.age', label: txx('Alter') },
+            ...[
+                ...addressFields.value,
+                ...churchFields.value,
+                ...categoryFields.value,
+                ...datasecurityFields.value,
+            ].map(field => ({ id: `person.0.${field.key}`, label: t(field.name, false) })),
         ];
     });
     return { persons, personError, personPlaceholder };

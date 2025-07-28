@@ -2,12 +2,12 @@
 import { Card, ContentWrapper, Input } from '@churchtools/styleguide';
 import QRCodeStyling from 'qr-code-styling';
 import { computed, onMounted, ref, watch } from 'vue';
-import { isValidUrl, txx } from '../../utils';
+import { txx } from '../../utils';
 
 const link = ref('https://church.tools');
 const color = ref('#000000');
 const background = ref('#ffffff');
-const fileName = ref('');
+// const fileName = ref('');
 const width = ref(400);
 
 const logoUrl = 'https://feg-karlsruhe.church.tools/logo';
@@ -73,30 +73,30 @@ onMounted(() => {
     qrCode.value.append(document.getElementById('canvas'));
 });
 
-const name = computed(() => {
-    if (!isValidUrl(link.value)) {
-        return '';
-    }
-    const url = new URL(link.value);
-    const email = (link: string) => {
-        const email = link.split('mailto:')[1];
-        return email ? email.split('?')[0] : '';
-    };
-    if (url.protocol === 'mailto:') {
-        return email(link.value);
-    }
-    return url.hostname.replace('www.', '');
-});
+// const name = computed(() => {
+//     if (!isValidUrl(link.value)) {
+//         return '';
+//     }
+//     const url = new URL(link.value);
+//     const email = (link: string) => {
+//         const email = link.split('mailto:')[1];
+//         return email ? email.split('?')[0] : '';
+//     };
+//     if (url.protocol === 'mailto:') {
+//         return email(link.value);
+//     }
+//     return url.hostname.replace('www.', '');
+// });
 </script>
 <template>
     <ContentWrapper color="accent" icon="fas fa-qrcode" max-width :title="txx('QR-Codes')">
         <div class="flex flex-col gap-4">
             <Input v-model="link" :label="txx('Link')" />
             <div class="grid grid-cols-2 gap-4">
-                <Card style="--card-px: 8px; --card-py: 8px" class="mt-6">
+                <Card class="mt-6" style="--card-px: 8px; --card-py: 8px">
                     <div id="canvas"></div>
                 </Card>
-                <img :src="logoUrl" />
+                <!-- <img :src="logoUrl" /> -->
                 <div class="flex flex-col gap-4">
                     <div>
                         <Input v-model="width" :label="txx('Größe')" />
